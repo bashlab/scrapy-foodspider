@@ -4,14 +4,10 @@ from scrapy.selector import Selector
 from foodspider.items import FoodItem
 
 class FoodSpider(CrawlSpider):
-
     name = 'food'
     allowed_domains = ['consumer.org.hk']
     start_urls = ['http://www3.consumer.org.hk/pricewatch/supermarket']
     rules = [Rule(LinkExtractor(allow=['/\?lang=en']), 'parse_food')]
-
-    #@staticmethod
-    #def checkHelper(result,tdx):
 
     def parse_food(self, response):
         hxs = Selector(response)
@@ -19,14 +15,20 @@ class FoodSpider(CrawlSpider):
         basket = []
         for result in results:
             food = FoodItem()
-            food['category'] = result.xpath('./td[2]/text()').extract()[0].strip()
-            food['brand'] = result.xpath('./td[3]/text()').extract()[0].strip()
+            food['category'] = self.extract_one(result,2)
+            food['brand'] = self.extract_one(result,3)
             food['product'] = result.xpath('./td[4]/a/text()').extract()
-            food['price_wellcome'] = result.xpath('./td[5]/text()').extract()[0].strip()
-            food['price_pnshop'] = result.xpath('./td[6]/text()').extract()[0].strip()
-            food['price_mktplc'] = result.xpath('./td[7]/text()').extract()[0].strip()
-            food['price_aeon'] = result.xpath('./td[8]/text()').extract()[0].strip()
-            food['price_dch'] = result.xpath('./td[9]/text()').extract()[0].strip()
-            food['last_update'] = result.select('./td[10]/text()').extract()[0].strip()
+            food['price_wellcome'] = self.extract_one(result,5)
+            food['price_pnshop'] = self.extract_one(result,6)
+            food['price_mktplc'] = self.extract_one(result,7)
+            food['price_aeon'] = self.extract_one(result,8)
+            food['price_dch'] = self.extract_one(result,9)
+            food['last_update'] = self.extract_one(result,10)
             basket.append(food)
         return basket
+
+
+    @staticmethod
+    def extract_one(result,idx):
+        xp = './td['+str(idx)+']/text()'
+        return result.xpath(xp).extract()[0].strip()
